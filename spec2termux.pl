@@ -4,7 +4,7 @@ use v5.10.1;
 use strict;
 use warnings;
 
-use List::MoreUtils qw( uniq );
+use List::MoreUtils qw(uniq);
 use Data::Dumper;
 use Devel::Confess;
 use File::Path qw(make_path);
@@ -27,9 +27,15 @@ sub indent($$);
 sub amend_make_cmds($);
 
 my $tarball_dir;
+my $termux_pkg_maintainer;
+my $termux_pkg_revision;
 
-GetOptions("tarball_dir=s" => \$tarball_dir)
-    or die("Error in command line arguments\n");
+GetOptions(
+    "tarball_dir=s" => \$tarball_dir,
+    "termux_pkg_maintainer:s" => \$termux_pkg_maintainer,
+    "termux_pkg_revision:i" => \$termux_pkg_revision
+) or die("Error in command line arguments\n");
+
 
 my $main_pkg = {};
 
@@ -268,15 +274,21 @@ safe_cd $name;
     if (exists $license_mapping{$license}) {
         $license = $license_mapping{$license};
     }
+    unless (defined $termux_pkg_maintainer) {
+        $termux_pkg_maintainer = "qiong.wu\@openresty.com"
+    }
+    unless (defined $termux_pkg_revision) {
+        $termux_pkg_revision = 1
+    }
     print $out <<_EOC_;
 #!/bin/bash
 set -x
 TERMUX_PKG_HOMEPAGE="$main_pkg->{URL}"
 TERMUX_PKG_DESCRIPTION="$main_pkg->{description}"
 TERMUX_PKG_LICENSE="$license"
-TERMUX_PKG_MAINTAINER="qiong.wu\@openresty.com"
+TERMUX_PKG_MAINTAINER="$termux_pkg_maintainer"
 TERMUX_PKG_VERSION="$main_pkg->{Version}"
-TERMUX_PKG_REVISION=2
+TERMUX_PKG_REVISION="$termux_pkg_revision"
 TERMUX_PKG_SRCURL="\$TERMUX_PKG_TARBALL_DIR/$name-$main_pkg->{Version}.tar.gz"
 _EOC_
     
