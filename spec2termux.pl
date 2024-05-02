@@ -238,8 +238,6 @@ while (<>) {
     die "unknown line: $_";
 }
 
-print Dumper($main_pkg);
-
 my $name = $main_pkg->{Name};
 
 if (!defined $name) {
@@ -269,7 +267,6 @@ safe_cd $name;
     my $license = $main_pkg->{License};
     if (exists $license_mapping{$license}) {
         $license = $license_mapping{$license};
-        print "Mapped License: $license\n";
     }
     print $out <<_EOC_;
 #!/bin/bash
@@ -296,24 +293,24 @@ _EOC_
         #write the dependencies
         my (@tm_dep_pkgs, @tm_deps);
         my $deps = $pkg_data->{Requires};
-    	if (defined $deps) { 
-			if (!ref $deps) {
-            	$deps = [$deps];
-        	}
-    		for my $deps (@$deps) {
-	    		my @deps = split /\s*,\s*/s, $deps;
-        		for my $dep (@deps) {
-                	$dep =~ s/^\s+|\s+$//gs;
+        if (defined $deps) { 
+            if (!ref $deps) {
+                $deps = [$deps];
+            }
+            for my $deps (@$deps) {
+                my @deps = split /\s*,\s*/s, $deps;
+                for my $dep (@deps) {
+                    $dep =~ s/^\s+|\s+$//gs;
                     print "\$dep: $dep\n";
-                	my ($tm_pkg, $tm_dep) = to_tm_pkg $dep;
+                    my ($tm_pkg, $tm_dep) = to_tm_pkg $dep;
                     print "\$deb_pkg: $tm_pkg, \$deb_dep: $tm_dep\n";
-                	if ($tm_pkg ne '') {
-                    	push @tm_deps, $tm_dep;
-                    	push @tm_dep_pkgs, $tm_pkg;
-                	}
-        		}
-    		}	
-    	}
+                    if ($tm_pkg ne '') {
+                        push @tm_deps, $tm_dep;
+                        push @tm_dep_pkgs, $tm_pkg;
+                    }
+                }
+            }
+        }
         if (@tm_dep_pkgs) {
             my $deps_str = join ', ', @tm_dep_pkgs;
             print $out "TERMUX_PKG_DEPENDS=\"$deps_str\"\n";
@@ -360,6 +357,7 @@ _EOC_
         $build =~ s/(\w+)='(.*?)(?<!\\)'/$1="$2"/gs;
         my $build_cmds = indent(amend_make_cmds($build), 4);
         print $out <<"_EOC_";
+
 termux_step_make() {
 $build_cmds
 }
@@ -372,6 +370,7 @@ _EOC_
         $install =~ s/(\w+)='(.*?)(?<!\\)'/$1="$2"/gs; 
         my $install_cmds = indent(amend_make_cmds($install), 4);
         print $out <<"_EOC_";
+
 termux_step_make_install() {
 $install_cmds
 }
@@ -382,14 +381,14 @@ _EOC_
 	close $out;
 }
 
-sub indent($$) {
+sub indent ($$) {
     my ($value, $size) = @_;
     my $s = ' ' x $size;
     $value =~ s/^/$s/mg;
     return $value;
 }
 
-sub amend_make_cmds($) {
+sub amend_make_cmds ($) {
     my $make_cmds = shift;
     $make_cmds = expand_macros($make_cmds);
     $make_cmds =~ s/-C\s+src/-C \$TERMUX_PKG_SRCDIR\/src/g;
