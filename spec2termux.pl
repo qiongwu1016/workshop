@@ -343,7 +343,7 @@ _EOC_
             my $deps_str = join ', ', @tm_build_dep_pkgs;
             print $out "TERMUX_PKG_BUILD_DEPENDS=\"$deps_str\"\n";
         }
-	}
+    }
 
     #write TERMUX_PREFIX AND TERMUX_PREFIX_CLASSICAL
     print $out <<'_EOC_';
@@ -376,9 +376,7 @@ $install_cmds
 }
 _EOC_
     }
-    
-
-	close $out;
+    close $out;
 }
 
 sub indent ($$) {
@@ -398,19 +396,12 @@ sub amend_make_cmds ($) {
 
 sub gen_tarball_sha256 ($$) {
     my ($tarball_dir, $tarball_file) = @_;
-
     my $full_path = "$tarball_dir/$tarball_file";
-
     print "full path: $full_path\n";
-
     open(my $fh, '<:raw', $full_path) or die "Can't open '$full_path': $!";
-
     my $sha256 = Digest::SHA->new(256);
-
     $sha256->addfile($fh);
-
     close($fh);
-
     return $sha256->hexdigest;
 }
 
